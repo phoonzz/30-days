@@ -45,8 +45,22 @@ def label(deposit):
         return "high"
 
 
+brand_summary = {}
 for row in players:
     try:
-        print(row["player"], row["brand"], row["deposit"], label(row["deposit"]))
-    except (TypeError, KeyError) as error:
-        print(f"Bad row (status unavailable): {row} ({error})")
+        brand = row["brand"]
+    except (KeyError, TypeError):
+        print(f"Bad row: {row}")
+        continue
+
+    if brand not in brand_summary:
+        brand_summary[brand] = {"players": 0, "total": 0.0}
+    brand_summary[brand]["players"] += 1
+
+    try:
+        brand_summary[brand]["total"] += float(row["deposit"])
+    except (KeyError, TypeError, ValueError):
+        continue
+
+for brand, summary in brand_summary.items():
+    print(f"{brand} has {summary['players']} players totalling {summary['total']:.2f}")
