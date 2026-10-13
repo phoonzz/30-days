@@ -9,21 +9,33 @@
 # you need: requests, csv
 import requests
 import csv
+import argparse
 
+parser = argparse.ArgumentParser(description="Pull crypto prices to CSV")
+parser.add_argument("--currency", default="myr", help="currency code, e.g. usd")
+parser.add_argument("--coins", type=int, default=10, help="how many coins")
+parser.add_argument("--out", default="prices.csv", help="output filename")
+args = parser.parse_args()
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s",
+)
 # ---- step 2: fetch ----
 # call the URL
 # print the status code  (200 means OK)
 # turn the response into python with .json()
 # print type() of what you got, and len()
-url = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=myr&order=market_cap_desc&per_page=10&page=1"
+url = f"https://api.coingecko.com/api/v3/coins/markets?vs_currency={args.currency}&order=market_cap_desc&per_page={args.coins}&page=1"
 
 r = requests.get(url)
-print(r.status_code)
+logging.info("HTTP status: %s", r.status_code)
 data = r.json()
-print(data[0])
-print(data[0].keys())
-print(type(data))
-print(len(data))
+logging.debug("First response record: %s", data[0])
+logging.debug("Response fields: %s", data[0].keys())
+logging.debug("Response type: %s", type(data))
+logging.info("fetched %d coins", len(data))
 
 # ---- step 3: look at one record ----
 # print the first item
@@ -49,19 +61,16 @@ for coin in data:
     }
     rows.append(row)                       
 
-print(rows[0])
-print(len(rows))
+logging.debug("First output row: %s", rows[0])
+logging.info("Prepared %d rows", len(rows))
 
 
 # ---- step 5: write the csv ----
 # csv.DictWriter, writeheader(), writerows()
 # filename: prices.csv
-with open("prices.csv", "w", newline="", encoding="utf-8") as f:
+with open(args.out, "w", newline="", encoding="utf-8") as f:
     writer = csv.DictWriter(f, fieldnames=rows[0].keys())
     writer.writeheader()
     writer.writerows(rows)
 
-# ---- step 6: make it not break ----
-# what if the request fails?
-# what if a coin is missing a field?
-# print a one-line summary at the end: how many written, how many skipped
+logging.info(f"wrote {len(rows)} rows to {args.out}")
