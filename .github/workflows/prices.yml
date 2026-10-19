@@ -1,0 +1,41 @@
+# A GitHub Action: GitHub runs this for you, on their computers, on a schedule.
+
+name: Fetch crypto prices
+
+on:
+  # run on a timer — this is cron, UTC. 0 1 * * * = 01:00 UTC daily (9am Malaysia)
+  schedule:
+    - cron: "0 1 * * *"
+  # also let you trigger it by hand from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    # the machine GitHub gives you. a fresh, empty Ubuntu box, every time.
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. copy your repo onto that machine
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      # 2. put python on it
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # 3. install your dependencies
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # 4. run your script
+      - name: Run the pipeline
+        run: python day10/save_prices.py
+
+      # 5. keep the database file so you can download it
+      - name: Save the database
+        uses: actions/upload-artifact@v4
+        with:
+          name: prices-db
+          path: day10/prices.db
